@@ -1,3 +1,8 @@
+from ai_helpdesk_platform.ai.schema.triage_schemas import TriageAgentRequestSchema
+from ai_helpdesk_platform.ai.schema.triage_schemas import TriageAgentResponseSchema
+from ai_helpdesk_platform.ai.service.triage_service import run_workflow
+from ai_helpdesk_platform.notifications.model.notification_model import NotificationModel
+from ai_helpdesk_platform.notifications.service.notification_service import create_notification
 from ai_helpdesk_platform.tickets.schema.ticket_schema import UpdateTicketResponseSchema
 from ai_helpdesk_platform.tickets.schema.ticket_schema import UpdateTicketRequestSchema
 from ai_helpdesk_platform.tickets.schema.ticket_schema import UpdateTicketRequestSchema
@@ -28,6 +33,9 @@ async def create_ticket(
     )
 
         db.add(ticket)
+
+        await create_notification(user_id=user_id, message = "Ticket created successfully", db=db)
+
         await db.commit()
         await db.refresh(ticket)
 
@@ -156,6 +164,30 @@ async def update_ticket(
 
 
 
+async def analyze_ticket(
+    db : AsyncSession,
+    user_id : uuid.UUID,
+    ticket_id : uuid.UUID
+) -> TriageAgentResponseSchema:
+    query = (
+        select(TicketModel)
+        .where(TicketModel.user_id == user_id, TicketModel.id == ticket_id)
+    )
 
+    result = await db.execute(query)
+
+    ticket_exists = result.scalar_one_or_none()
+
+    if ticket_exists is None:
+        raise LookupError()
+
+    request = TriageAgentRequestSchema(
+        title = ticket_exists.title,
+        description = ticket_exists.description,
+        status = getattr(ticket_exists.status, "value", ticket_exists.status),
+        priority = getattr(ticket_exists.priority, "value", ticket_exists.priority)
+    )
+
+    return await run_workflow(data = request)
 
 

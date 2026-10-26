@@ -1,3 +1,5 @@
+from ai_helpdesk_platform.auth.service.auth_service import RefreshTokenExpiredError
+from ai_helpdesk_platform.auth.service.auth_service import InvalidCredentials
 from ai_helpdesk_platform.auth.service.auth_service import InvalidToken
 from ai_helpdesk_platform.auth.service.auth_service import refresh_token
 from ai_helpdesk_platform.auth.schema.auth_schema import RefreshTokenRequestSchema
@@ -52,6 +54,14 @@ async def execute_login(
             detail = "Invalid credentials"
         )
 
+    except InvalidCredentials:
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail = "Invalid credentials"
+        )
+
+
+
     except Exception as e:
         raise HTTPException(
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -73,6 +83,12 @@ async def execute_refresh_token(
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail = "Invalid token"
+        )
+
+    except RefreshTokenExpiredError:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = "Refresh token expired"
         )
 
     except Exception as e:

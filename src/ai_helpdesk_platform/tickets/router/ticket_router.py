@@ -1,3 +1,4 @@
+from ai_helpdesk_platform.tickets.service.ticket_service import analyze_ticket
 from ai_helpdesk_platform.tickets.service.ticket_service import update_ticket
 from ai_helpdesk_platform.tickets.schema.ticket_schema import UpdateTicketRequestSchema
 from ai_helpdesk_platform.tickets.model.ticket_model import TicketPriority
@@ -35,7 +36,7 @@ async def execute_create_ticket(
         )
 
 
-@ticket_router.get("get-ticket/{ticket_id}")
+@ticket_router.get("/get-ticket/{ticket_id}")
 async def execute_get_ticket(
     ticket_id : uuid.UUID,
     user : UserModel = Depends(get_user),
@@ -57,7 +58,7 @@ async def execute_get_ticket(
             detail = str(e)
         )
     
-@ticket_router.get("list-tickets")
+@ticket_router.get("/list-tickets")
 async def execute_list_tickets(
     user : UserModel = Depends(get_user),
     db : AsyncSession = Depends(get_db),
@@ -104,4 +105,28 @@ async def execute_update_ticket(
             detail = str(e)
         )
 
+
+
+
+@ticket_router.post("/analyze/{ticket_id}")
+async def execute_analyze_ticket(
+    ticket_id : uuid.UUID,
+    db : AsyncSession = Depends(get_db),
+    user : UserModel = Depends(get_user)
+) :
+    try:
+        result = await analyze_ticket(db=db, user_id=user.id, ticket_id=ticket_id)
+        return result
+
+    except LookupError:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Ticket not found"
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail = str(e)
+        )
 

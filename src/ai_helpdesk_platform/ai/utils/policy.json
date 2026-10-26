@@ -1,0 +1,6 @@
+{
+    "BILLING": "Ask the customer for their transaction reference. Do not promise refunds before verification.",
+    "BUG": "Collect reproduction steps, app version and screenshots. Escalate critical defects.",
+    "TECHNICAL": "Ask for error details and provide basic troubleshooting instructions.",
+    "OTHER": "Acknowledge the request and forward it to the appropriate support team."
+}

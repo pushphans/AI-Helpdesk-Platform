@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRY_IN_DAYS : int
     JWT_SECRET_KEY : str
 
+    GOOGLE_API_KEY : str
+    MODEL_NAME : str
+    GOOGLE_MODEL_PROVIDER : str
+
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -11,6 +11,7 @@ from ai_helpdesk_platform.core.db import Base
 from ai_helpdesk_platform.auth.model.users_model import UserModel
 from ai_helpdesk_platform.auth.model.refresh_token_model import RefreshTokenModel
 from ai_helpdesk_platform.tickets.model.ticket_model import TicketModel
+from ai_helpdesk_platform.notifications.model.notification_model import NotificationModel
 from ai_helpdesk_platform.core.config import settings
 
 # this is the Alembic Config object, which provides

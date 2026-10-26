@@ -7,3 +7,6 @@ pyJWT
 sqlalchemy[asyncio]
 alembic
 asyncpg
+langchain
+langgraph
+langchain-google-genai

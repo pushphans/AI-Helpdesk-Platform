@@ -1,3 +1,6 @@
+from fastapi import HTTPException
+from ai_helpdesk_platform.auth.uitls.password_utils import password_hasher
+from ai_helpdesk_platform.auth.uitls.password_utils import verify_hashed_password
 from ai_helpdesk_platform.core.db import get_db
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -28,6 +31,13 @@ class UserAlreadyExistsError(Exception):
 
 class InvalidToken(Exception):
     pass
+
+class InvalidCredentials(Exception):
+    pass
+
+class RefreshTokenExpiredError(Exception):
+    pass
+
 
 
 
@@ -90,6 +100,11 @@ async def login(
 
         if user_exists is None:
             raise LookupError()
+
+        password_verified = verify_hashed_password(hashed_password=user_exists.password_hash, password=data.password)
+
+        if not password_verified:
+            raise InvalidCredentials()
         
         access_token = await create_access_token(user_id=user_exists.id)
         access_token_expiry = settings.ACCESS_TOKEN_EXPIRY_IN_MINUTES * 60
@@ -159,6 +174,9 @@ async def refresh_token(
         if rt_exists is None:
             raise InvalidToken()
 
+        if rt_exists.rt_expiry <= datetime.now(timezone.utc):
+            raise RefreshTokenExpiredError()
+
         new_refresh_token = await create_refresh_token()
 
         rt_exists.refresh_token = new_refresh_token
@@ -190,15 +208,22 @@ async def get_user(
     db : AsyncSession = Depends(get_db), 
     credentials : HTTPAuthorizationCredentials = Depends(security),
 ):
+
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired access token",
+        )
+
     token = credentials.credentials
     payload = await decode_token(token=token)
 
     user_id = payload.get("sub")
 
     if user_id is None:
-        return JSONResponse(
+        return HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={"detail" : "Invalid token"}
+            detail = "Invalid token"
         )
 
     query = (
@@ -211,9 +236,9 @@ async def get_user(
     user = result.scalar_one_or_none()
 
     if user is None:
-        return JSONResponse(
+        return HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={"detail" : "User not found"}
+            detail = "User not found"
         )
 
     return user

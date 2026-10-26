@@ -3,6 +3,27 @@
 .env.*
 !.env.example
 
+# Credentials, keys & certificates — NEVER commit
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+serviceAccount*.json
+service-account*.json
+google-credentials.json
+credentials*.json
+secrets/
+secrets.*
+*.keystore
+
+# Local databases / data dumps
+*.sqlite3
+*.sqlite
+*.db
+*.dump
+
 # Virtual environment
 .venv/
 venv/
