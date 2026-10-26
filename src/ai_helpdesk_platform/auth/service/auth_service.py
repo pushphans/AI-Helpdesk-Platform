@@ -221,8 +221,8 @@ async def get_user(
     user_id = payload.get("sub")
 
     if user_id is None:
-        return HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail = "Invalid token"
         )
 
@@ -236,7 +236,7 @@ async def get_user(
     user = result.scalar_one_or_none()
 
     if user is None:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail = "User not found"
         )
