@@ -10,3 +10,4 @@ asyncpg
 langchain
 langgraph
 langchain-google-genai
+httpx

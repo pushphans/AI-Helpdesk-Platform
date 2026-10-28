@@ -41,7 +41,7 @@ class RefreshTokenExpiredError(Exception):
 
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def register_user(
@@ -52,7 +52,7 @@ async def register_user(
         query = (
         select(UserModel)
         .where(UserModel.email == data.email)
-    )
+        )
 
         result = await db.execute(query)
 
@@ -206,7 +206,7 @@ async def refresh_token(
 
 async def get_user(
     db : AsyncSession = Depends(get_db), 
-    credentials : HTTPAuthorizationCredentials = Depends(security),
+    credentials : HTTPAuthorizationCredentials | None = Depends(security),
 ):
 
     if credentials is None:

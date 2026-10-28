@@ -1,6 +1,7 @@
-from ai_helpdesk_platform.ai.schema.triage_schemas import TriageAgentRequestSchema
-from ai_helpdesk_platform.ai.schema.triage_schemas import TriageAgentResponseSchema
-from ai_helpdesk_platform.ai.service.triage_service import run_workflow
+from ai_helpdesk_platform.core.config import settings
+from fastapi import status
+from fastapi import HTTPException
+from ai_helpdesk_platform.tickets.schema.ticket_schema import TriageAgentRequestSchema
 from ai_helpdesk_platform.notifications.model.notification_model import NotificationModel
 from ai_helpdesk_platform.notifications.service.notification_service import create_notification
 from ai_helpdesk_platform.tickets.schema.ticket_schema import UpdateTicketResponseSchema
@@ -15,7 +16,7 @@ from ai_helpdesk_platform.tickets.model.ticket_model import TicketModel
 import uuid
 from ai_helpdesk_platform.tickets.schema.ticket_schema import CreateTicketRequestSchema
 from sqlalchemy.ext.asyncio import AsyncSession
-
+import httpx
 
 
 async def create_ticket(
@@ -168,7 +169,7 @@ async def analyze_ticket(
     db : AsyncSession,
     user_id : uuid.UUID,
     ticket_id : uuid.UUID
-) -> TriageAgentResponseSchema:
+) :
     query = (
         select(TicketModel)
         .where(TicketModel.user_id == user_id, TicketModel.id == ticket_id)
@@ -181,13 +182,42 @@ async def analyze_ticket(
     if ticket_exists is None:
         raise LookupError()
 
-    request = TriageAgentRequestSchema(
-        title = ticket_exists.title,
-        description = ticket_exists.description,
-        status = getattr(ticket_exists.status, "value", ticket_exists.status),
-        priority = getattr(ticket_exists.priority, "value", ticket_exists.priority)
+    ticket_analyzer_request_schema = TriageAgentRequestSchema(
+        title=ticket_exists.title,
+        description=ticket_exists.description,
+        status=ticket_exists.status,
+        priority=ticket_exists.priority
     )
 
-    return await run_workflow(data = request)
+    
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(
+                url=f"{settings.AI_SERVICE_URL}/tickets-analyze",
+                headers={
+                    "Authorization" : f"Bearer {settings.SERVICE_ACTIVATION_TOKEN}"
+                },
+                json=ticket_analyzer_request_schema.model_dump()
+            )
 
+            response.raise_for_status()
 
+            return response.json()
+
+    except httpx.TimeoutException:
+        raise HTTPException(
+            status_code=504,
+            detail="AI service timeout"
+        )
+
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=502,
+            detail="AI service unavailable"
+        )
+
+    except httpx.HTTPStatusError:
+        raise HTTPException(
+            status_code=502,
+            detail="AI service request failed"
+        )

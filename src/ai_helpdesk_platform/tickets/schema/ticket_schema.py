@@ -42,3 +42,17 @@ class UpdateTicketResponseSchema(BaseModel):
     priority : TicketPriority
     created_at : datetime
     updated_at : datetime
+
+
+class TriageAgentRequestSchema(BaseModel):
+    title : str
+    description : str
+    status : TicketStatus
+    priority : TicketPriority
+
+
+class TriageAgentResponseSchema(BaseModel):
+    category : str
+    summary : str
+    suggested_priority : TicketPriority
+    suggested_reply : str

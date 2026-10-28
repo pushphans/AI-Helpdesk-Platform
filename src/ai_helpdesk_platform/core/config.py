@@ -7,9 +7,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRY_IN_DAYS : int
     JWT_SECRET_KEY : str
 
-    GOOGLE_API_KEY : str
-    MODEL_NAME : str
-    GOOGLE_MODEL_PROVIDER : str
+
+    SERVICE_ACTIVATION_TOKEN : str
+    AI_SERVICE_URL : str
 
 
     model_config = SettingsConfigDict(

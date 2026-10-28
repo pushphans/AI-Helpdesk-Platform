@@ -123,6 +123,9 @@ async def execute_analyze_ticket(
             status_code = status.HTTP_404_NOT_FOUND,
             detail = "Ticket not found"
         )
+    
+    except HTTPException:
+        raise
 
     except Exception as e:
         raise HTTPException(
