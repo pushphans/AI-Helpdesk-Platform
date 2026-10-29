@@ -45,6 +45,7 @@ class UpdateTicketResponseSchema(BaseModel):
 
 
 class TriageAgentRequestSchema(BaseModel):
+    user_id : uuid.UUID
     title : str
     description : str
     status : TicketStatus

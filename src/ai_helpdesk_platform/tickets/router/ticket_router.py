@@ -1,3 +1,6 @@
+import httpx
+from ai_helpdesk_platform.core.rate_limiter import limiter
+from fastapi import Request
 from ai_helpdesk_platform.tickets.service.ticket_service import analyze_ticket
 from ai_helpdesk_platform.tickets.service.ticket_service import update_ticket
 from ai_helpdesk_platform.tickets.schema.ticket_schema import UpdateTicketRequestSchema
@@ -16,9 +19,17 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ai_helpdesk_platform.tickets.schema.ticket_schema import CreateTicketRequestSchema
 from fastapi import APIRouter, HTTPException
+from tenacity import retry, wait_fixed, retry_if_exception_type, stop_after_attempt
 
 ticket_router = APIRouter(prefix="/ticket", tags=["TICKET"])
 
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(2),
+    retry=retry_if_exception_type(httpx.ConnectTimeout, httpx.ConnectError),
+    reraise=True
+)
 @ticket_router.post("/create-ticket")
 async def execute_create_ticket(
     data : CreateTicketRequestSchema,
@@ -109,7 +120,9 @@ async def execute_update_ticket(
 
 
 @ticket_router.post("/analyze/{ticket_id}")
+@limiter.limit("10/minute")
 async def execute_analyze_ticket(
+    request : Request,
     ticket_id : uuid.UUID,
     db : AsyncSession = Depends(get_db),
     user : UserModel = Depends(get_user)

@@ -11,3 +11,5 @@ langchain
 langgraph
 langchain-google-genai
 httpx
+slowapi
+tenacity

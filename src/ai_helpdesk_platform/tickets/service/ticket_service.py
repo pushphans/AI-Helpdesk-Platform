@@ -183,6 +183,7 @@ async def analyze_ticket(
         raise LookupError()
 
     ticket_analyzer_request_schema = TriageAgentRequestSchema(
+        user_id=user_id,
         title=ticket_exists.title,
         description=ticket_exists.description,
         status=ticket_exists.status,
@@ -193,7 +194,7 @@ async def analyze_ticket(
     try:
         async with httpx.AsyncClient(timeout=120) as client:
             response = await client.post(
-                url=f"{settings.AI_SERVICE_URL}/tickets-analyze",
+                url=f"{settings.AI_SERVICE_URL}/ticket-analyze",
                 headers={
                     "Authorization" : f"Bearer {settings.SERVICE_ACTIVATION_TOKEN}"
                 },
